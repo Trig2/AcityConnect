@@ -21,6 +21,14 @@ app.use('/api/items', itemRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/interactions', interactionRoutes);
 
+// API root
+app.get('/api', (req, res) => {
+  res.json({
+    status: 'ACity Connect API is running',
+    endpoints: ['/api/health', '/api/users', '/api/items', '/api/skills', '/api/interactions']
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Backend is running' });

@@ -6,9 +6,9 @@ const router = express.Router();
 
 router.get('/', itemController.getAllItems);
 router.post('/', authMiddleware, itemController.createItem);
+router.get('/user/:userId', itemController.getUserItems);
 router.get('/:id', itemController.getItemById);
 router.put('/:id', authMiddleware, itemController.updateItem);
 router.delete('/:id', authMiddleware, itemController.deleteItem);
-router.get('/user/:userId', itemController.getUserItems);
 
 export default router;

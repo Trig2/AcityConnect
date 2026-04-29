@@ -33,7 +33,7 @@ export const getAllItems = async (req, res) => {
 
 export const createItem = async (req, res) => {
   try {
-    const { title, description, category, price, image_url } = req.body;
+    const { title, description, category, price, image_url, status = 'available' } = req.body;
     const user_id = req.user.id;
 
     if (!title || !description || !category) {
@@ -41,8 +41,8 @@ export const createItem = async (req, res) => {
     }
 
     const result = await pool.query(
-      'INSERT INTO items (user_id, title, description, category, price, image_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [user_id, title, description, category, price, image_url]
+      'INSERT INTO items (user_id, title, description, category, price, image_url, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [user_id, title, description, category, price, image_url, status]
     );
 
     res.status(201).json(result.rows[0]);
