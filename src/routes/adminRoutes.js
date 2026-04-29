@@ -3,6 +3,36 @@ import pool from '../db/connection.js';
 import { authMiddleware, isAdminMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
+// Admin password auth endpoint - returns a temporary admin JWT when password matches.
+router.post('/auth', async (req, res) => {
+  try {
+    const { password } = req.body;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminPassword) {
+      return res.status(400).json({ error: 'Admin password is not configured on the server' });
+    }
+
+    if (!password || password !== adminPassword) {
+      return res.status(401).json({ error: 'Invalid admin password' });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ error: 'JWT secret not configured on server' });
+    }
+
+    const token = require('jsonwebtoken').sign(
+      { id: 'admin', email: process.env.ADMIN_EMAIL || 'admin', admin: true },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return res.json({ token });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
 
 router.use(authMiddleware, isAdminMiddleware);
 
