@@ -140,9 +140,14 @@ const initDatabase = async () => {
         console.log(`🔐 Admin user created (id=${inserted.rows[0].id}, email=${adminEmail})`);
         console.log(`   Password: ${adminPassword}`);
       } else {
-        // Ensure existing user has admin flag set
-        await pool.query('UPDATE users SET admin = TRUE WHERE email = $1', [adminEmail]);
+        // Ensure existing user has admin flag set and password refreshed
+        const password_hash = await bcrypt.hash(adminPassword, 10);
+        await pool.query(
+          'UPDATE users SET admin = TRUE, password_hash = $2, updated_at = CURRENT_TIMESTAMP WHERE email = $1',
+          [adminEmail, password_hash]
+        );
         console.log(`🔐 Admin user ensured (email=${adminEmail})`);
+        console.log(`   Password refreshed: ${adminPassword}`);
       }
     } catch (err) {
       console.error('❌ Failed to seed admin user:', err);
