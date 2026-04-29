@@ -6,6 +6,7 @@ import userRoutes from './routes/userRoutes.js';
 import itemRoutes from './routes/itemRoutes.js';
 import skillRoutes from './routes/skillRoutes.js';
 import interactionRoutes from './routes/interactionRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/interactions', interactionRoutes);
+app.use('/api/admin', adminRoutes);
 
 // API root
 app.get('/api', (req, res) => {
