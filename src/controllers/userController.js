@@ -27,6 +27,11 @@ export const register = async (req, res) => {
     );
 
     const user = result.rows[0];
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ error: 'JWT secret is not configured on the backend' });
+    }
+
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({
@@ -36,6 +41,9 @@ export const register = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    if (err?.code === 'ECONNREFUSED' || err?.code === 'ENOTFOUND' || err?.code === '57P01') {
+      return res.status(503).json({ error: 'Database unavailable. Start PostgreSQL and try again.' });
+    }
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -69,6 +77,9 @@ export const login = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    if (err?.code === 'ECONNREFUSED' || err?.code === 'ENOTFOUND' || err?.code === '57P01') {
+      return res.status(503).json({ error: 'Database unavailable. Start PostgreSQL and try again.' });
+    }
     res.status(500).json({ error: 'Server error' });
   }
 };
