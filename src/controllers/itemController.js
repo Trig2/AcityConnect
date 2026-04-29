@@ -55,7 +55,17 @@ export const createItem = async (req, res) => {
 export const getItemById = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('SELECT * FROM items WHERE id = $1', [id]);
+    const result = await pool.query(
+      `SELECT items.*,
+              users.first_name AS seller_first_name,
+              users.last_name AS seller_last_name,
+              users.email AS seller_email,
+              users.academic_email AS seller_academic_email
+       FROM items
+       JOIN users ON items.user_id = users.id
+       WHERE items.id = $1`,
+      [id]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Item not found' });
