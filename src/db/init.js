@@ -1,4 +1,8 @@
 import pool from './connection.js';
+import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const initDatabase = async () => {
   try {
@@ -10,6 +14,7 @@ const initDatabase = async () => {
         last_name VARCHAR(100) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
+        admin BOOLEAN DEFAULT FALSE,
         phone VARCHAR(20),
         bio TEXT,
         avatar_url VARCHAR(255),
@@ -18,6 +23,9 @@ const initDatabase = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Ensure admin column exists for older schemas
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS admin BOOLEAN DEFAULT FALSE`);
 
     // Skills table
     await pool.query(`
@@ -111,6 +119,35 @@ const initDatabase = async () => {
     `);
 
     console.log('✅ Database initialized successfully!');
+
+    // Seed an admin user when ADMIN_EMAIL and ADMIN_PASSWORD are provided in env
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (adminEmail && adminPassword) {
+      try {
+        const existing = await pool.query('SELECT id FROM users WHERE email = $1', [adminEmail]);
+        if (existing.rows.length === 0) {
+          const password_hash = await bcrypt.hash(adminPassword, 10);
+          const first_name = process.env.ADMIN_FIRST_NAME || 'Admin';
+          const last_name = process.env.ADMIN_LAST_NAME || 'User';
+          const academic_email = process.env.ADMIN_ACADEMIC_EMAIL || adminEmail;
+
+          const inserted = await pool.query(
+            `INSERT INTO users (first_name, last_name, email, password_hash, academic_email, admin) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+            [first_name, last_name, adminEmail, password_hash, academic_email, true]
+          );
+
+          console.log(`🔐 Admin user created (id=${inserted.rows[0].id}, email=${adminEmail})`);
+        } else {
+          // Ensure existing user has admin flag set
+          await pool.query('UPDATE users SET admin = TRUE WHERE email = $1', [adminEmail]);
+          console.log(`🔐 Admin user ensured (email=${adminEmail})`);
+        }
+      } catch (err) {
+        console.error('❌ Failed to seed admin user:', err);
+      }
+    }
   } catch (err) {
     console.error('❌ Error initializing database:', err);
     process.exit(1);
